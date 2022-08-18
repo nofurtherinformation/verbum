@@ -11,11 +11,11 @@ import { INSERT_HORIZONTAL_RULE_COMMAND } from '@lexical/react/LexicalHorizontal
 import EquationsPlugin, {
   INSERT_EQUATION_COMMAND,
 } from '../../EquationsPlugin';
-import ExcalidrawPlugin, {
-  INSERT_EXCALIDRAW_COMMAND,
-} from '../../ExcalidrawPlugin';
-import PollPlugin, { INSERT_POLL_COMMAND } from '../../PollPlugin';
-import TwitterPlugin, { INSERT_TWEET_COMMAND } from '../../TwitterPlugin';
+// import ExcalidrawPlugin, {
+//   INSERT_EXCALIDRAW_COMMAND,
+// } from '../../ExcalidrawPlugin';
+// import PollPlugin, { INSERT_POLL_COMMAND } from '../../PollPlugin';
+// import TwitterPlugin, { INSERT_TWEET_COMMAND } from '../../TwitterPlugin';
 import YouTubePlugin, { INSERT_YOUTUBE_COMMAND } from '../../YouTubePlugin';
 import { $createStickyNode } from '../../../nodes/StickyNode';
 import KatexEquationAlterer from '../../../ui/KatexEquationAlterer';
@@ -116,67 +116,67 @@ function InsertTableDialog({
   );
 }
 
-function InsertPollDialog({
-  activeEditor,
-  onClose,
-}: {
-  activeEditor: LexicalEditor;
-  onClose: () => void;
-}): JSX.Element {
-  const [question, setQuestion] = useState('');
+// function InsertPollDialog({
+//   activeEditor,
+//   onClose,
+// }: {
+//   activeEditor: LexicalEditor;
+//   onClose: () => void;
+// }): JSX.Element {
+//   const [question, setQuestion] = useState('');
 
-  const onClick = () => {
-    activeEditor.dispatchCommand(INSERT_POLL_COMMAND, question);
-    onClose();
-  };
+//   const onClick = () => {
+//     activeEditor.dispatchCommand(INSERT_POLL_COMMAND, question);
+//     onClose();
+//   };
 
-  return (
-    <>
-      <TextInput label="Question" onChange={setQuestion} value={question} />
-      <div className="ToolbarPlugin__dialogActions">
-        <Button disabled={question.trim() === ''} onClick={onClick}>
-          Confirm
-        </Button>
-      </div>
-    </>
-  );
-}
+//   return (
+//     <>
+//       <TextInput label="Question" onChange={setQuestion} value={question} />
+//       <div className="ToolbarPlugin__dialogActions">
+//         <Button disabled={question.trim() === ''} onClick={onClick}>
+//           Confirm
+//         </Button>
+//       </div>
+//     </>
+//   );
+// }
 
 const VALID_TWITTER_URL = /twitter.com\/[0-9a-zA-Z]{1,20}\/status\/([0-9]*)/g;
 
-function InsertTweetDialog({
-  activeEditor,
-  onClose,
-}: {
-  activeEditor: LexicalEditor;
-  onClose: () => void;
-}): JSX.Element {
-  const [text, setText] = useState('');
+// function InsertTweetDialog({
+//   activeEditor,
+//   onClose,
+// }: {
+//   activeEditor: LexicalEditor;
+//   onClose: () => void;
+// }): JSX.Element {
+//   const [text, setText] = useState('');
 
-  const onClick = () => {
-    const tweetID = text.split('status/')?.[1]?.split('?')?.[0];
-    activeEditor.dispatchCommand(INSERT_TWEET_COMMAND, tweetID);
-    onClose();
-  };
+//   const onClick = () => {
+//     const tweetID = text.split('status/')?.[1]?.split('?')?.[0];
+//     activeEditor.dispatchCommand(INSERT_TWEET_COMMAND, tweetID);
+//     onClose();
+//   };
 
-  const isDisabled = text === '' || !text.match(VALID_TWITTER_URL);
+//   const isDisabled = text === '' || !text.match(VALID_TWITTER_URL);
 
-  return (
-    <>
-      <TextInput
-        label="Tweet URL"
-        placeholder="i.e. https://twitter.com/jack/status/20"
-        onChange={setText}
-        value={text}
-      />
-      <div className="ToolbarPlugin__dialogActions">
-        <Button disabled={isDisabled} onClick={onClick}>
-          Confirm
-        </Button>
-      </div>
-    </>
-  );
-}
+//   return (
+//     <>
+//       <TextInput
+//         label="Tweet URL"
+//         placeholder="i.e. https://twitter.com/jack/status/20"
+//         onChange={setText}
+//         value={text}
+//       />
+//       <div className="ToolbarPlugin__dialogActions">
+//         <Button disabled={isDisabled} onClick={onClick}>
+//           Confirm
+//         </Button>
+//       </div>
+//     </>
+//   );
+// }
 
 function InsertImageUriDialogBody({
   onClick,
@@ -366,11 +366,11 @@ const InsertDropdown: React.FC<IInsertDropdownProps> = ({
         </>
       )}
       {enableYoutube && <YouTubePlugin />}
-      {enableTwitter && <TwitterPlugin />}
-      {enablePoll && <PollPlugin />}
+      {/* {enableTwitter && <TwitterPlugin />} */}
+      {/* {enablePoll && <PollPlugin />} */}
       {enableImage && <ImagesPlugin />}
       {enableEquations && <EquationsPlugin />}
-      {enableExcalidraw && <ExcalidrawPlugin />}
+      {/* {enableExcalidraw && <ExcalidrawPlugin />} */}
       {enableHorizontalRule && <HorizontalRulePlugin />}
 
       <DropDown
@@ -411,7 +411,7 @@ const InsertDropdown: React.FC<IInsertDropdownProps> = ({
             <span className="text">Image</span>
           </button>
         )}
-        {enableExcalidraw && (
+        {/* {enableExcalidraw && (
           <button
             onClick={() => {
               activeEditor.dispatchCommand(
@@ -425,7 +425,7 @@ const InsertDropdown: React.FC<IInsertDropdownProps> = ({
             <i className="icon diagram-2" />
             <span className="text">Excalidraw</span>
           </button>
-        )}
+        )} */}
         {enableTable && (
           <div>
             <button
@@ -445,7 +445,7 @@ const InsertDropdown: React.FC<IInsertDropdownProps> = ({
             </button>
           </div>
         )}
-        {enablePoll && (
+        {/* {enablePoll && (
           <button
             onClick={() => {
               showModal('Insert Poll', (onClose) => (
@@ -461,8 +461,8 @@ const InsertDropdown: React.FC<IInsertDropdownProps> = ({
             <i className="icon poll" />
             <span className="text">Poll</span>
           </button>
-        )}
-        {enableTwitter && (
+        )} */}
+        {/* {enableTwitter && (
           <button
             onClick={() => {
               showModal('Insert Tweet', (onClose) => (
@@ -478,7 +478,7 @@ const InsertDropdown: React.FC<IInsertDropdownProps> = ({
             <i className="icon tweet" />
             <span className="text">Tweet</span>
           </button>
-        )}
+        )} */}
         {enableYoutube && (
           <button
             onClick={() => {

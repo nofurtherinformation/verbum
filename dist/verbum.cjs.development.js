@@ -20,10 +20,6 @@ var lexical = require('lexical');
 var LexicalComposerContext = require('@lexical/react/LexicalComposerContext');
 var utils = require('@lexical/utils');
 var katex = _interopDefault(require('katex'));
-var useLexicalNodeSelection = require('@lexical/react/useLexicalNodeSelection');
-var Excalidraw = require('@excalidraw/excalidraw');
-var Excalidraw__default = _interopDefault(Excalidraw);
-var reactDom = require('react-dom');
 var LexicalCollaborationPlugin = require('@lexical/react/LexicalCollaborationPlugin');
 var LexicalHashtagPlugin = require('@lexical/react/LexicalHashtagPlugin');
 var LexicalHistoryPlugin = require('@lexical/react/LexicalHistoryPlugin');
@@ -31,9 +27,11 @@ var LexicalLinkPlugin = require('@lexical/react/LexicalLinkPlugin');
 var LexicalNestedComposer = require('@lexical/react/LexicalNestedComposer');
 var LexicalRichTextPlugin = require('@lexical/react/LexicalRichTextPlugin');
 var LexicalTablePlugin = require('@lexical/react/LexicalTablePlugin');
+var useLexicalNodeSelection = require('@lexical/react/useLexicalNodeSelection');
 var yWebsocket = require('y-websocket');
 var yjs = require('yjs');
 var useLexicalTextEntity = require('@lexical/react/useLexicalTextEntity');
+var reactDom = require('react-dom');
 var LexicalTreeView = require('@lexical/react/LexicalTreeView');
 var LexicalContentEditable$1 = require('@lexical/react/LexicalContentEditable');
 var LexicalPlainTextPlugin = require('@lexical/react/LexicalPlainTextPlugin');
@@ -442,826 +440,6 @@ function $createEquationNode(equation, inline) {
 }
 function $isEquationNode(node) {
   return node instanceof EquationNode;
-}
-
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
- */
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
-}
-
-var Direction = {
-  east: 1 << 0,
-  north: 1 << 3,
-  south: 1 << 1,
-  west: 1 << 2
-};
-function ImageResizer(_ref) {
-  var {
-    onResizeStart,
-    onResizeEnd,
-    imageRef,
-    maxWidth,
-    editor,
-    showCaption,
-    setShowCaption
-  } = _ref;
-  var buttonRef = React.useRef(null);
-  var positioningRef = React.useRef({
-    currentHeight: 0,
-    currentWidth: 0,
-    direction: 0,
-    isResizing: false,
-    ratio: 0,
-    startHeight: 0,
-    startWidth: 0,
-    startX: 0,
-    startY: 0
-  });
-  var editorRootElement = editor.getRootElement(); // Find max width, accounting for editor padding.
-
-  var maxWidthContainer = maxWidth ? maxWidth : editorRootElement !== null ? editorRootElement.getBoundingClientRect().width - 20 : 100;
-  var maxHeightContainer = editorRootElement !== null ? editorRootElement.getBoundingClientRect().height - 20 : 100;
-  var minWidth = 100;
-  var minHeight = 100;
-
-  var setStartCursor = direction => {
-    var ew = direction === Direction.east || direction === Direction.west;
-    var ns = direction === Direction.north || direction === Direction.south;
-    var nwse = direction & Direction.north && direction & Direction.west || direction & Direction.south && direction & Direction.east;
-    var cursorDir = ew ? 'ew' : ns ? 'ns' : nwse ? 'nwse' : 'nesw';
-
-    if (editorRootElement !== null) {
-      editorRootElement.style.setProperty('cursor', cursorDir + "-resize", 'important');
-    }
-
-    if (document.body !== null) {
-      document.body.style.setProperty('cursor', cursorDir + "-resize", 'important');
-    }
-  };
-
-  var setEndCursor = () => {
-    if (editorRootElement !== null) {
-      editorRootElement.style.setProperty('cursor', 'default');
-    }
-
-    if (document.body !== null) {
-      document.body.style.setProperty('cursor', 'default');
-    }
-  };
-
-  var handlePointerDown = (event, direction) => {
-    var image = imageRef.current;
-
-    if (image !== null) {
-      var {
-        width,
-        height
-      } = image.getBoundingClientRect();
-      var positioning = positioningRef.current;
-      positioning.startWidth = width;
-      positioning.startHeight = height;
-      positioning.ratio = width / height;
-      positioning.currentWidth = width;
-      positioning.currentHeight = height;
-      positioning.startX = event.clientX;
-      positioning.startY = event.clientY;
-      positioning.isResizing = true;
-      positioning.direction = direction;
-      setStartCursor(direction);
-      onResizeStart();
-      image.style.height = height + "px";
-      image.style.width = width + "px";
-      document.addEventListener('pointermove', handlePointerMove);
-      document.addEventListener('pointerup', handlePointerUp);
-    }
-  };
-
-  var handlePointerMove = event => {
-    var image = imageRef.current;
-    var positioning = positioningRef.current;
-    var isHorizontal = positioning.direction & (Direction.east | Direction.west);
-    var isVertical = positioning.direction & (Direction.south | Direction.north);
-
-    if (image !== null && positioning.isResizing) {
-      // Corner cursor
-      if (isHorizontal && isVertical) {
-        var diff = Math.floor(positioning.startX - event.clientX);
-        diff = positioning.direction & Direction.east ? -diff : diff;
-        var width = clamp(positioning.startWidth + diff, minWidth, maxWidthContainer);
-        var height = width / positioning.ratio;
-        image.style.width = width + "px";
-        image.style.height = height + "px";
-        positioning.currentHeight = height;
-        positioning.currentWidth = width;
-      } else if (isVertical) {
-        var _diff = Math.floor(positioning.startY - event.clientY);
-
-        _diff = positioning.direction & Direction.south ? -_diff : _diff;
-
-        var _height = clamp(positioning.startHeight + _diff, minHeight, maxHeightContainer);
-
-        image.style.height = _height + "px";
-        positioning.currentHeight = _height;
-      } else {
-        var _diff2 = Math.floor(positioning.startX - event.clientX);
-
-        _diff2 = positioning.direction & Direction.east ? -_diff2 : _diff2;
-
-        var _width = clamp(positioning.startWidth + _diff2, minWidth, maxWidthContainer);
-
-        image.style.width = _width + "px";
-        positioning.currentWidth = _width;
-      }
-    }
-  };
-
-  var handlePointerUp = () => {
-    var image = imageRef.current;
-    var positioning = positioningRef.current;
-
-    if (image !== null && positioning.isResizing) {
-      var width = positioning.currentWidth;
-      var height = positioning.currentHeight;
-      positioning.startWidth = 0;
-      positioning.startHeight = 0;
-      positioning.ratio = 0;
-      positioning.startX = 0;
-      positioning.startY = 0;
-      positioning.currentWidth = 0;
-      positioning.currentHeight = 0;
-      positioning.isResizing = false;
-      setEndCursor();
-      onResizeEnd(width, height);
-      document.removeEventListener('pointermove', handlePointerMove);
-      document.removeEventListener('pointerup', handlePointerUp);
-    }
-  };
-
-  return /*#__PURE__*/React.createElement(React.Fragment, null, !showCaption && /*#__PURE__*/React.createElement("button", {
-    className: "image-caption-button",
-    ref: buttonRef,
-    onClick: () => {
-      setShowCaption(!showCaption);
-    }
-  }, "Add Caption"), /*#__PURE__*/React.createElement("div", {
-    className: "image-resizer image-resizer-n",
-    onPointerDown: event => {
-      handlePointerDown(event, Direction.north);
-    }
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "image-resizer image-resizer-ne",
-    onPointerDown: event => {
-      handlePointerDown(event, Direction.north | Direction.east);
-    }
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "image-resizer image-resizer-e",
-    onPointerDown: event => {
-      handlePointerDown(event, Direction.east);
-    }
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "image-resizer image-resizer-se",
-    onPointerDown: event => {
-      handlePointerDown(event, Direction.south | Direction.east);
-    }
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "image-resizer image-resizer-s",
-    onPointerDown: event => {
-      handlePointerDown(event, Direction.south);
-    }
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "image-resizer image-resizer-sw",
-    onPointerDown: event => {
-      handlePointerDown(event, Direction.south | Direction.west);
-    }
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "image-resizer image-resizer-w",
-    onPointerDown: event => {
-      handlePointerDown(event, Direction.west);
-    }
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "image-resizer image-resizer-nw",
-    onPointerDown: event => {
-      handlePointerDown(event, Direction.north | Direction.west);
-    }
-  }));
-}
-
-// We don't want them to be used in open source
-
-var removeStyleFromSvg_HACK = svg => {
-  var _svg$firstElementChil;
-
-  var styleTag = svg == null ? void 0 : (_svg$firstElementChil = svg.firstElementChild) == null ? void 0 : _svg$firstElementChil.firstElementChild; // Generated SVG is getting double-sized by height and width attributes
-  // We want to match the real size of the SVG element
-
-  var viewBox = svg.getAttribute('viewBox');
-
-  if (viewBox != null) {
-    var viewBoxDimentions = viewBox.split(' ');
-    svg.setAttribute('width', viewBoxDimentions[2]);
-    svg.setAttribute('height', viewBoxDimentions[3]);
-  }
-
-  if (styleTag && styleTag.tagName === 'style') {
-    styleTag.remove();
-  }
-};
-/**
- * @explorer-desc
- * A component for rendering Excalidraw elements as a static image
- */
-
-
-function ExcalidrawImage(_ref) {
-  var _Svg$outerHTML;
-
-  var {
-    elements,
-    imageContainerRef,
-    appState = null,
-    rootClassName = null
-  } = _ref;
-  var [Svg, setSvg] = React.useState(null);
-  React.useEffect(() => {
-    var setContent = /*#__PURE__*/function () {
-      var _ref2 = _asyncToGenerator(function* () {
-        var svg = yield Excalidraw.exportToSvg({
-          appState,
-          elements,
-          files: null
-        });
-        removeStyleFromSvg_HACK(svg);
-        svg.setAttribute('width', '100%');
-        svg.setAttribute('height', '100%');
-        svg.setAttribute('display', 'block');
-        setSvg(svg);
-      });
-
-      return function setContent() {
-        return _ref2.apply(this, arguments);
-      };
-    }();
-
-    setContent();
-  }, [elements, appState]);
-  return /*#__PURE__*/React.createElement("div", {
-    ref: imageContainerRef,
-    className: rootClassName != null ? rootClassName : '',
-    dangerouslySetInnerHTML: {
-      __html: (_Svg$outerHTML = Svg == null ? void 0 : Svg.outerHTML) != null ? _Svg$outerHTML : ''
-    }
-  });
-}
-
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
- */
-function joinClasses() {
-  for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-    args[_key] = arguments[_key];
-  }
-
-  return args.filter(Boolean).join(' ');
-}
-
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
- */
-function Button(_ref) {
-  var {
-    'data-test-id': dataTestId,
-    children,
-    className,
-    onClick,
-    disabled,
-    small,
-    title
-  } = _ref;
-  return /*#__PURE__*/React.createElement("button", Object.assign({
-    disabled: disabled,
-    className: joinClasses('Button__root', disabled && 'Button__disabled', small && 'Button__small', className),
-    onClick: onClick,
-    title: title,
-    "aria-label": title
-  }, dataTestId && {
-    'data-test-id': dataTestId
-  }), children);
-}
-
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
- */
-
-function PortalImpl(_ref) {
-  var {
-    onClose,
-    children,
-    title,
-    closeOnClickOutside
-  } = _ref;
-  var modalRef = React.useRef();
-  React.useEffect(() => {
-    if (modalRef.current !== null) {
-      modalRef.current.focus();
-    }
-  }, []);
-  React.useEffect(() => {
-    var modalOverlayElement = null;
-
-    var handler = event => {
-      if (event.keyCode === 27) {
-        onClose();
-      }
-    };
-
-    var clickOutsideHandler = event => {
-      var target = event.target;
-
-      if (modalRef.current !== null && !modalRef.current.contains(target) && closeOnClickOutside) {
-        onClose();
-      }
-    };
-
-    if (modalRef.current !== null) {
-      var _modalRef$current;
-
-      modalOverlayElement = (_modalRef$current = modalRef.current) == null ? void 0 : _modalRef$current.parentElement;
-
-      if (modalOverlayElement !== null) {
-        var _modalOverlayElement;
-
-        (_modalOverlayElement = modalOverlayElement) == null ? void 0 : _modalOverlayElement.addEventListener('click', clickOutsideHandler);
-      }
-    }
-
-    window.addEventListener('keydown', handler);
-    return () => {
-      window.removeEventListener('keydown', handler);
-
-      if (modalOverlayElement !== null) {
-        var _modalOverlayElement2;
-
-        (_modalOverlayElement2 = modalOverlayElement) == null ? void 0 : _modalOverlayElement2.removeEventListener('click', clickOutsideHandler);
-      }
-    };
-  }, [closeOnClickOutside, onClose]);
-  return /*#__PURE__*/React.createElement("div", {
-    className: "Modal__overlay",
-    role: "dialog"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "Modal__modal",
-    tabIndex: -1,
-    ref: modalRef
-  }, /*#__PURE__*/React.createElement("h2", {
-    className: "Modal__title"
-  }, title), /*#__PURE__*/React.createElement("button", {
-    className: "Modal__closeButton",
-    "aria-label": "Close modal",
-    type: "button",
-    onClick: onClose
-  }, "X"), /*#__PURE__*/React.createElement("div", {
-    className: "Modal__content"
-  }, children)));
-}
-
-function Modal(_ref2) {
-  var {
-    onClose,
-    children,
-    title,
-    closeOnClickOutside = false
-  } = _ref2;
-  return /*#__PURE__*/reactDom.createPortal( /*#__PURE__*/React.createElement(PortalImpl, {
-    onClose: onClose,
-    title: title,
-    closeOnClickOutside: closeOnClickOutside
-  }, children), document.body);
-}
-
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
- */
-/**
- * @explorer-desc
- * A component which renders a modal with Excalidraw (a painting app)
- * which can be used to export an editable image
- */
-
-function ExcalidrawModal(_ref) {
-  var {
-    closeOnClickOutside = false,
-    onSave,
-    initialElements,
-    isShown = false,
-    onHide,
-    onDelete
-  } = _ref;
-  var excalidrawRef = React.useRef(null);
-  var excaliDrawModelRef = React.useRef(null);
-  var [discardModalOpen, setDiscardModalOpen] = React.useState(false);
-  var [elements, setElements] = React.useState(initialElements);
-  React.useEffect(() => {
-    if (excaliDrawModelRef.current !== null) {
-      excaliDrawModelRef.current.focus();
-    }
-  }, []);
-  React.useEffect(() => {
-    var modalOverlayElement = null;
-
-    var clickOutsideHandler = event => {
-      var target = event.target;
-
-      if (excaliDrawModelRef.current !== null && !excaliDrawModelRef.current.contains(target) && closeOnClickOutside) {
-        onDelete();
-      }
-    };
-
-    if (excaliDrawModelRef.current !== null) {
-      var _excaliDrawModelRef$c;
-
-      modalOverlayElement = (_excaliDrawModelRef$c = excaliDrawModelRef.current) == null ? void 0 : _excaliDrawModelRef$c.parentElement;
-
-      if (modalOverlayElement !== null) {
-        var _modalOverlayElement;
-
-        (_modalOverlayElement = modalOverlayElement) == null ? void 0 : _modalOverlayElement.addEventListener('click', clickOutsideHandler);
-      }
-    }
-
-    return () => {
-      if (modalOverlayElement !== null) {
-        var _modalOverlayElement2;
-
-        (_modalOverlayElement2 = modalOverlayElement) == null ? void 0 : _modalOverlayElement2.removeEventListener('click', clickOutsideHandler);
-      }
-    };
-  }, [closeOnClickOutside, onDelete]);
-
-  var save = () => {
-    if (elements.filter(el => !el.isDeleted).length > 0) {
-      onSave(elements);
-    } else {
-      // delete node if the scene is clear
-      onDelete();
-    }
-
-    onHide();
-  };
-
-  var discard = () => {
-    if (elements.filter(el => !el.isDeleted).length === 0) {
-      // delete node if the scene is clear
-      onDelete();
-    } else {
-      //Otherwise, show confirmation dialog before closing
-      setDiscardModalOpen(true);
-    }
-  };
-
-  function ShowDiscardDialog() {
-    return /*#__PURE__*/React.createElement(Modal, {
-      title: "Discard",
-      onClose: () => {
-        setDiscardModalOpen(false);
-      },
-      closeOnClickOutside: true
-    }, "Are you sure you want to discard the changes?", /*#__PURE__*/React.createElement("div", {
-      className: "ExcalidrawModal__discardModal"
-    }, /*#__PURE__*/React.createElement(Button, {
-      onClick: () => {
-        setDiscardModalOpen(false);
-        onHide();
-      }
-    }, "Discard"), ' ', /*#__PURE__*/React.createElement(Button, {
-      onClick: () => {
-        setDiscardModalOpen(false);
-      }
-    }, "Cancel")));
-  }
-
-  React.useEffect(() => {
-    var _excalidrawRef$curren;
-
-    excalidrawRef == null ? void 0 : (_excalidrawRef$curren = excalidrawRef.current) == null ? void 0 : _excalidrawRef$curren.updateScene({
-      elements: initialElements
-    });
-  }, [initialElements]);
-
-  if (isShown === false) {
-    return null;
-  }
-
-  var onChange = els => {
-    setElements(els);
-  }; // This is a hacky work-around for Excalidraw + Vite.
-  // In DEV, Vite pulls this in fine, in prod it doesn't. It seems
-  // like a module resolution issue with ESM vs CJS?
-
-
-  var _Excalidraw = Excalidraw__default.$$typeof != null ? Excalidraw__default : Excalidraw__default;
-
-  return /*#__PURE__*/reactDom.createPortal( /*#__PURE__*/React.createElement("div", {
-    className: "ExcalidrawModal__overlay",
-    role: "dialog"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "ExcalidrawModal__modal",
-    ref: excaliDrawModelRef,
-    tabIndex: -1
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "ExcalidrawModal__row"
-  }, discardModalOpen && /*#__PURE__*/React.createElement(ShowDiscardDialog, null), /*#__PURE__*/React.createElement(_Excalidraw, {
-    onChange: onChange,
-    initialData: {
-      appState: {
-        isLoading: false
-      },
-      elements: initialElements
-    }
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "ExcalidrawModal__actions"
-  }, /*#__PURE__*/React.createElement("button", {
-    className: "action-button",
-    onClick: discard
-  }, "Discard"), /*#__PURE__*/React.createElement("button", {
-    className: "action-button",
-    onClick: save
-  }, "Save"))))), document.body);
-}
-
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
- */
-
-function ExcalidrawComponent(_ref) {
-  var {
-    nodeKey,
-    data
-  } = _ref;
-  var [editor] = LexicalComposerContext.useLexicalComposerContext();
-  var [isModalOpen, setModalOpen] = React.useState(data === '[]' && !editor.isReadOnly());
-  var imageContainerRef = React.useRef(null);
-  var buttonRef = React.useRef(null);
-  var [isSelected, setSelected, clearSelection] = useLexicalNodeSelection.useLexicalNodeSelection(nodeKey);
-  var [isResizing, setIsResizing] = React.useState(false);
-  var onDelete = React.useCallback(payload => {
-    if (isSelected && lexical.$isNodeSelection(lexical.$getSelection())) {
-      var event = payload;
-      event.preventDefault();
-      editor.update(() => {
-        var node = lexical.$getNodeByKey(nodeKey);
-
-        if ($isExcalidrawNode(node)) {
-          node.remove();
-        }
-
-        setSelected(false);
-      });
-    }
-
-    return false;
-  }, [editor, isSelected, nodeKey, setSelected]); // Set editor to readOnly if excalidraw is open to prevent unwanted changes
-
-  React.useEffect(() => {
-    if (isModalOpen) {
-      editor.setReadOnly(true);
-    } else {
-      editor.setReadOnly(false);
-    }
-  }, [isModalOpen, editor]);
-  React.useEffect(() => {
-    return utils.mergeRegister(editor.registerCommand(lexical.CLICK_COMMAND, event => {
-      var buttonElem = buttonRef.current;
-      var eventTarget = event.target;
-
-      if (isResizing) {
-        return true;
-      }
-
-      if (buttonElem !== null && buttonElem.contains(eventTarget)) {
-        if (!event.shiftKey) {
-          clearSelection();
-        }
-
-        setSelected(!isSelected);
-
-        if (event.detail > 1) {
-          setModalOpen(true);
-        }
-
-        return true;
-      }
-
-      return false;
-    }, lexical.COMMAND_PRIORITY_LOW), editor.registerCommand(lexical.KEY_DELETE_COMMAND, onDelete, lexical.COMMAND_PRIORITY_LOW), editor.registerCommand(lexical.KEY_BACKSPACE_COMMAND, onDelete, lexical.COMMAND_PRIORITY_LOW));
-  }, [clearSelection, editor, isSelected, isResizing, onDelete, setSelected]);
-  var deleteNode = React.useCallback(() => {
-    setModalOpen(false);
-    editor.update(() => {
-      var node = lexical.$getNodeByKey(nodeKey);
-
-      if ($isExcalidrawNode(node)) {
-        node.remove();
-      }
-    });
-    return true;
-  }, [editor, nodeKey]);
-
-  var setData = newData => {
-    if (editor.isReadOnly()) {
-      return;
-    }
-
-    return editor.update(() => {
-      var node = lexical.$getNodeByKey(nodeKey);
-
-      if ($isExcalidrawNode(node)) {
-        if (newData.length > 0) {
-          node.setData(JSON.stringify(newData));
-        } else {
-          node.remove();
-        }
-      }
-    });
-  };
-
-  var onResizeStart = () => {
-    setIsResizing(true);
-  };
-
-  var onResizeEnd = (nextWidth, nextHeight) => {
-    // Delay hiding the resize bars for click case
-    setTimeout(() => {
-      setIsResizing(false);
-    }, 200);
-  };
-
-  var elements = React.useMemo(() => JSON.parse(data), [data]);
-  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(ExcalidrawModal, {
-    initialElements: elements,
-    isShown: isModalOpen,
-    onDelete: deleteNode,
-    onHide: () => {
-      editor.setReadOnly(false);
-      setModalOpen(false);
-    },
-    onSave: newData => {
-      editor.setReadOnly(false);
-      setData(newData);
-      setModalOpen(false);
-    },
-    closeOnClickOutside: true
-  }), elements.length > 0 && /*#__PURE__*/React.createElement("button", {
-    ref: buttonRef,
-    className: "excalidraw-button " + (isSelected ? 'selected' : '')
-  }, /*#__PURE__*/React.createElement(ExcalidrawImage, {
-    imageContainerRef: imageContainerRef,
-    className: "image",
-    elements: elements
-  }), (isSelected || isResizing) && /*#__PURE__*/React.createElement(ImageResizer, {
-    showCaption: true,
-    setShowCaption: () => null,
-    imageRef: imageContainerRef,
-    editor: editor,
-    onResizeStart: onResizeStart,
-    onResizeEnd: onResizeEnd
-  })));
-}
-
-function convertExcalidrawElement(domNode) {
-  var excalidrawData = domNode.getAttribute('data-lexical-excalidraw-json');
-
-  if (excalidrawData) {
-    var node = $createExcalidrawNode();
-    node.__data = excalidrawData;
-    return {
-      node
-    };
-  }
-
-  return null;
-}
-
-class ExcalidrawNode extends lexical.DecoratorNode {
-  constructor(data, key) {
-    if (data === void 0) {
-      data = '[]';
-    }
-
-    super(key);
-    this.__data = data;
-  }
-
-  static getType() {
-    return 'excalidraw';
-  }
-
-  static clone(node) {
-    return new ExcalidrawNode(node.__data, node.__key);
-  }
-
-  static importJSON(serializedNode) {
-    return new ExcalidrawNode(serializedNode.data);
-  }
-
-  exportJSON() {
-    return {
-      data: this.__data,
-      type: 'excalidraw',
-      version: 1
-    };
-  } // View
-
-
-  createDOM(config) {
-    var span = document.createElement('span');
-    var theme = config.theme;
-    var className = theme.image;
-
-    if (className !== undefined) {
-      span.className = className;
-    }
-
-    return span;
-  }
-
-  updateDOM() {
-    return false;
-  }
-
-  static importDOM() {
-    return {
-      span: domNode => {
-        if (!domNode.hasAttribute('data-lexical-excalidraw-json')) {
-          return null;
-        }
-
-        return {
-          conversion: convertExcalidrawElement,
-          priority: 1
-        };
-      }
-    };
-  }
-
-  exportDOM(editor) {
-    var element = document.createElement('span');
-    var content = editor.getElementByKey(this.getKey());
-
-    if (content !== null) {
-      element.innerHTML = content.querySelector('svg').outerHTML;
-    }
-
-    element.setAttribute('data-lexical-excalidraw-json', this.__data);
-    return {
-      element
-    };
-  }
-
-  setData(data) {
-    var self = this.getWritable();
-    self.__data = data;
-  }
-
-  decorate(editor) {
-    return /*#__PURE__*/React.createElement(ExcalidrawComponent, {
-      nodeKey: this.getKey(),
-      data: this.__data
-    });
-  }
-
-}
-function $createExcalidrawNode() {
-  return new ExcalidrawNode();
-}
-function $isExcalidrawNode(node) {
-  return node instanceof ExcalidrawNode;
 }
 
 /**
@@ -2664,6 +1842,215 @@ function LexicalContentEditable(_ref) {
  * LICENSE file in the root directory of this source tree.
  *
  */
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+var Direction = {
+  east: 1 << 0,
+  north: 1 << 3,
+  south: 1 << 1,
+  west: 1 << 2
+};
+function ImageResizer(_ref) {
+  var {
+    onResizeStart,
+    onResizeEnd,
+    imageRef,
+    maxWidth,
+    editor,
+    showCaption,
+    setShowCaption
+  } = _ref;
+  var buttonRef = React.useRef(null);
+  var positioningRef = React.useRef({
+    currentHeight: 0,
+    currentWidth: 0,
+    direction: 0,
+    isResizing: false,
+    ratio: 0,
+    startHeight: 0,
+    startWidth: 0,
+    startX: 0,
+    startY: 0
+  });
+  var editorRootElement = editor.getRootElement(); // Find max width, accounting for editor padding.
+
+  var maxWidthContainer = maxWidth ? maxWidth : editorRootElement !== null ? editorRootElement.getBoundingClientRect().width - 20 : 100;
+  var maxHeightContainer = editorRootElement !== null ? editorRootElement.getBoundingClientRect().height - 20 : 100;
+  var minWidth = 100;
+  var minHeight = 100;
+
+  var setStartCursor = direction => {
+    var ew = direction === Direction.east || direction === Direction.west;
+    var ns = direction === Direction.north || direction === Direction.south;
+    var nwse = direction & Direction.north && direction & Direction.west || direction & Direction.south && direction & Direction.east;
+    var cursorDir = ew ? 'ew' : ns ? 'ns' : nwse ? 'nwse' : 'nesw';
+
+    if (editorRootElement !== null) {
+      editorRootElement.style.setProperty('cursor', cursorDir + "-resize", 'important');
+    }
+
+    if (document.body !== null) {
+      document.body.style.setProperty('cursor', cursorDir + "-resize", 'important');
+    }
+  };
+
+  var setEndCursor = () => {
+    if (editorRootElement !== null) {
+      editorRootElement.style.setProperty('cursor', 'default');
+    }
+
+    if (document.body !== null) {
+      document.body.style.setProperty('cursor', 'default');
+    }
+  };
+
+  var handlePointerDown = (event, direction) => {
+    var image = imageRef.current;
+
+    if (image !== null) {
+      var {
+        width,
+        height
+      } = image.getBoundingClientRect();
+      var positioning = positioningRef.current;
+      positioning.startWidth = width;
+      positioning.startHeight = height;
+      positioning.ratio = width / height;
+      positioning.currentWidth = width;
+      positioning.currentHeight = height;
+      positioning.startX = event.clientX;
+      positioning.startY = event.clientY;
+      positioning.isResizing = true;
+      positioning.direction = direction;
+      setStartCursor(direction);
+      onResizeStart();
+      image.style.height = height + "px";
+      image.style.width = width + "px";
+      document.addEventListener('pointermove', handlePointerMove);
+      document.addEventListener('pointerup', handlePointerUp);
+    }
+  };
+
+  var handlePointerMove = event => {
+    var image = imageRef.current;
+    var positioning = positioningRef.current;
+    var isHorizontal = positioning.direction & (Direction.east | Direction.west);
+    var isVertical = positioning.direction & (Direction.south | Direction.north);
+
+    if (image !== null && positioning.isResizing) {
+      // Corner cursor
+      if (isHorizontal && isVertical) {
+        var diff = Math.floor(positioning.startX - event.clientX);
+        diff = positioning.direction & Direction.east ? -diff : diff;
+        var width = clamp(positioning.startWidth + diff, minWidth, maxWidthContainer);
+        var height = width / positioning.ratio;
+        image.style.width = width + "px";
+        image.style.height = height + "px";
+        positioning.currentHeight = height;
+        positioning.currentWidth = width;
+      } else if (isVertical) {
+        var _diff = Math.floor(positioning.startY - event.clientY);
+
+        _diff = positioning.direction & Direction.south ? -_diff : _diff;
+
+        var _height = clamp(positioning.startHeight + _diff, minHeight, maxHeightContainer);
+
+        image.style.height = _height + "px";
+        positioning.currentHeight = _height;
+      } else {
+        var _diff2 = Math.floor(positioning.startX - event.clientX);
+
+        _diff2 = positioning.direction & Direction.east ? -_diff2 : _diff2;
+
+        var _width = clamp(positioning.startWidth + _diff2, minWidth, maxWidthContainer);
+
+        image.style.width = _width + "px";
+        positioning.currentWidth = _width;
+      }
+    }
+  };
+
+  var handlePointerUp = () => {
+    var image = imageRef.current;
+    var positioning = positioningRef.current;
+
+    if (image !== null && positioning.isResizing) {
+      var width = positioning.currentWidth;
+      var height = positioning.currentHeight;
+      positioning.startWidth = 0;
+      positioning.startHeight = 0;
+      positioning.ratio = 0;
+      positioning.startX = 0;
+      positioning.startY = 0;
+      positioning.currentWidth = 0;
+      positioning.currentHeight = 0;
+      positioning.isResizing = false;
+      setEndCursor();
+      onResizeEnd(width, height);
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+    }
+  };
+
+  return /*#__PURE__*/React.createElement(React.Fragment, null, !showCaption && /*#__PURE__*/React.createElement("button", {
+    className: "image-caption-button",
+    ref: buttonRef,
+    onClick: () => {
+      setShowCaption(!showCaption);
+    }
+  }, "Add Caption"), /*#__PURE__*/React.createElement("div", {
+    className: "image-resizer image-resizer-n",
+    onPointerDown: event => {
+      handlePointerDown(event, Direction.north);
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "image-resizer image-resizer-ne",
+    onPointerDown: event => {
+      handlePointerDown(event, Direction.north | Direction.east);
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "image-resizer image-resizer-e",
+    onPointerDown: event => {
+      handlePointerDown(event, Direction.east);
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "image-resizer image-resizer-se",
+    onPointerDown: event => {
+      handlePointerDown(event, Direction.south | Direction.east);
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "image-resizer image-resizer-s",
+    onPointerDown: event => {
+      handlePointerDown(event, Direction.south);
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "image-resizer image-resizer-sw",
+    onPointerDown: event => {
+      handlePointerDown(event, Direction.south | Direction.west);
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "image-resizer image-resizer-w",
+    onPointerDown: event => {
+      handlePointerDown(event, Direction.west);
+    }
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "image-resizer image-resizer-nw",
+    onPointerDown: event => {
+      handlePointerDown(event, Direction.north | Direction.west);
+    }
+  }));
+}
+
+/**
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ *
+ */
 function Placeholder(_ref) {
   var {
     children,
@@ -2991,6 +2378,49 @@ function $createImageNode(_ref4) {
 }
 function $isImageNode(node) {
   return node instanceof ImageNode;
+}
+
+/**
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ *
+ */
+function joinClasses() {
+  for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+    args[_key] = arguments[_key];
+  }
+
+  return args.filter(Boolean).join(' ');
+}
+
+/**
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ *
+ */
+function Button(_ref) {
+  var {
+    'data-test-id': dataTestId,
+    children,
+    className,
+    onClick,
+    disabled,
+    small,
+    title
+  } = _ref;
+  return /*#__PURE__*/React.createElement("button", Object.assign({
+    disabled: disabled,
+    className: joinClasses('Button__root', disabled && 'Button__disabled', small && 'Button__small', className),
+    onClick: onClick,
+    title: title,
+    "aria-label": title
+  }, dataTestId && {
+    'data-test-id': dataTestId
+  }), children);
 }
 
 /**
@@ -3943,7 +3373,8 @@ function $createYouTubeNode(videoID) {
  * LICENSE file in the root directory of this source tree.
  *
  */
-var PlaygroundNodes = [richText.HeadingNode, list.ListNode, list.ListItemNode, richText.QuoteNode, code.CodeNode, table.TableNode, table.TableCellNode, table.TableRowNode, hashtag.HashtagNode, code.CodeHighlightNode, link.AutoLinkNode, link.LinkNode, overflow.OverflowNode, PollNode, StickyNode, ImageNode, MentionNode, EmojiNode, ExcalidrawNode, EquationNode, TypeaheadNode, KeywordNode, LexicalHorizontalRuleNode.HorizontalRuleNode, TweetNode, YouTubeNode, mark.MarkNode];
+var PlaygroundNodes = [richText.HeadingNode, list.ListNode, list.ListItemNode, richText.QuoteNode, code.CodeNode, table.TableNode, table.TableCellNode, table.TableRowNode, hashtag.HashtagNode, code.CodeHighlightNode, link.AutoLinkNode, link.LinkNode, overflow.OverflowNode, PollNode, StickyNode, ImageNode, MentionNode, EmojiNode, // ExcalidrawNode,
+EquationNode, TypeaheadNode, KeywordNode, LexicalHorizontalRuleNode.HorizontalRuleNode, TweetNode, YouTubeNode, mark.MarkNode];
 
 var EditorComposer = _ref => {
   var {
@@ -3963,6 +3394,100 @@ var EditorComposer = _ref => {
     className: "editor-shell"
   }, children));
 };
+
+/**
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ *
+ */
+
+function PortalImpl(_ref) {
+  var {
+    onClose,
+    children,
+    title,
+    closeOnClickOutside
+  } = _ref;
+  var modalRef = React.useRef();
+  React.useEffect(() => {
+    if (modalRef.current !== null) {
+      modalRef.current.focus();
+    }
+  }, []);
+  React.useEffect(() => {
+    var modalOverlayElement = null;
+
+    var handler = event => {
+      if (event.keyCode === 27) {
+        onClose();
+      }
+    };
+
+    var clickOutsideHandler = event => {
+      var target = event.target;
+
+      if (modalRef.current !== null && !modalRef.current.contains(target) && closeOnClickOutside) {
+        onClose();
+      }
+    };
+
+    if (modalRef.current !== null) {
+      var _modalRef$current;
+
+      modalOverlayElement = (_modalRef$current = modalRef.current) == null ? void 0 : _modalRef$current.parentElement;
+
+      if (modalOverlayElement !== null) {
+        var _modalOverlayElement;
+
+        (_modalOverlayElement = modalOverlayElement) == null ? void 0 : _modalOverlayElement.addEventListener('click', clickOutsideHandler);
+      }
+    }
+
+    window.addEventListener('keydown', handler);
+    return () => {
+      window.removeEventListener('keydown', handler);
+
+      if (modalOverlayElement !== null) {
+        var _modalOverlayElement2;
+
+        (_modalOverlayElement2 = modalOverlayElement) == null ? void 0 : _modalOverlayElement2.removeEventListener('click', clickOutsideHandler);
+      }
+    };
+  }, [closeOnClickOutside, onClose]);
+  return /*#__PURE__*/React.createElement("div", {
+    className: "Modal__overlay",
+    role: "dialog"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "Modal__modal",
+    tabIndex: -1,
+    ref: modalRef
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "Modal__title"
+  }, title), /*#__PURE__*/React.createElement("button", {
+    className: "Modal__closeButton",
+    "aria-label": "Close modal",
+    type: "button",
+    onClick: onClose
+  }, "X"), /*#__PURE__*/React.createElement("div", {
+    className: "Modal__content"
+  }, children)));
+}
+
+function Modal(_ref2) {
+  var {
+    onClose,
+    children,
+    title,
+    closeOnClickOutside = false
+  } = _ref2;
+  return /*#__PURE__*/reactDom.createPortal( /*#__PURE__*/React.createElement(PortalImpl, {
+    onClose: onClose,
+    title: title,
+    closeOnClickOutside: closeOnClickOutside
+  }, children), document.body);
+}
 
 /**
  * Copyright (c) Meta Platforms, Inc. and affiliates.
@@ -5439,99 +4964,6 @@ function EquationsPlugin() {
   return null;
 }
 
-var INSERT_EXCALIDRAW_COMMAND = /*#__PURE__*/lexical.createCommand();
-function ExcalidrawPlugin() {
-  var [editor] = LexicalComposerContext.useLexicalComposerContext();
-  React.useEffect(() => {
-    if (!editor.hasNodes([ExcalidrawNode])) {
-      throw new Error('ExcalidrawPlugin: ExcalidrawNode not registered on editor');
-    }
-
-    return editor.registerCommand(INSERT_EXCALIDRAW_COMMAND, () => {
-      var selection = lexical.$getSelection();
-
-      if (lexical.$isRangeSelection(selection)) {
-        var excalidrawNode = $createExcalidrawNode();
-        selection.insertNodes([excalidrawNode]);
-      }
-
-      return true;
-    }, lexical.COMMAND_PRIORITY_EDITOR);
-  }, [editor]);
-  return null;
-}
-
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
- */
-var INSERT_POLL_COMMAND = /*#__PURE__*/lexical.createCommand();
-function PollPlugin() {
-  var [editor] = LexicalComposerContext.useLexicalComposerContext();
-  React.useEffect(() => {
-    if (!editor.hasNodes([PollNode])) {
-      throw new Error('PollPlugin: PollNode not registered on editor');
-    }
-
-    return editor.registerCommand(INSERT_POLL_COMMAND, payload => {
-      var selection = lexical.$getSelection();
-
-      if (lexical.$isRangeSelection(selection)) {
-        var question = payload;
-        var pollNode = $createPollNode(question);
-
-        if (lexical.$isRootNode(selection.anchor.getNode())) {
-          selection.insertParagraph();
-        }
-
-        selection.insertNodes([pollNode]);
-      }
-
-      return true;
-    }, lexical.COMMAND_PRIORITY_EDITOR);
-  }, [editor]);
-  return null;
-}
-
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
- */
-var INSERT_TWEET_COMMAND = /*#__PURE__*/lexical.createCommand();
-function TwitterPlugin() {
-  var [editor] = LexicalComposerContext.useLexicalComposerContext();
-  React.useEffect(() => {
-    if (!editor.hasNodes([TweetNode])) {
-      throw new Error('TwitterPlugin: TweetNode not registered on editor');
-    }
-
-    return editor.registerCommand(INSERT_TWEET_COMMAND, payload => {
-      var selection = lexical.$getSelection();
-
-      if (lexical.$isRangeSelection(selection)) {
-        var focusNode = selection.focus.getNode();
-
-        if (focusNode !== null) {
-          var tweetNode = $createTweetNode(payload);
-          selection.focus.getNode().getTopLevelElementOrThrow().insertAfter(tweetNode);
-          var paragraphNode = lexical.$createParagraphNode();
-          tweetNode.insertAfter(paragraphNode);
-          paragraphNode.select();
-        }
-      }
-
-      return true;
-    }, lexical.COMMAND_PRIORITY_EDITOR);
-  }, [editor]);
-  return null;
-}
-
 /**
  * Copyright (c) Meta Platforms, Inc. and affiliates.
  *
@@ -6009,67 +5441,41 @@ function InsertTableDialog(_ref2) {
   }, /*#__PURE__*/React__default.createElement(Button, {
     onClick: onClick
   }, "Confirm")));
-}
+} // function InsertPollDialog({
+//   activeEditor,
+//   onClose,
+// }: {
+//   activeEditor: LexicalEditor;
+//   onClose: () => void;
+// }): JSX.Element {
+//   const [text, setText] = useState('');
+//   const onClick = () => {
+//     const tweetID = text.split('status/')?.[1]?.split('?')?.[0];
+//     activeEditor.dispatchCommand(INSERT_TWEET_COMMAND, tweetID);
+//     onClose();
+//   };
+//   const isDisabled = text === '' || !text.match(VALID_TWITTER_URL);
+//   return (
+//     <>
+//       <TextInput
+//         label="Tweet URL"
+//         placeholder="i.e. https://twitter.com/jack/status/20"
+//         onChange={setText}
+//         value={text}
+//       />
+//       <div className="ToolbarPlugin__dialogActions">
+//         <Button disabled={isDisabled} onClick={onClick}>
+//           Confirm
+//         </Button>
+//       </div>
+//     </>
+//   );
+// }
 
-function InsertPollDialog(_ref3) {
-  var {
-    activeEditor,
-    onClose
-  } = _ref3;
-  var [question, setQuestion] = React.useState('');
-
-  var onClick = () => {
-    activeEditor.dispatchCommand(INSERT_POLL_COMMAND, question);
-    onClose();
-  };
-
-  return /*#__PURE__*/React__default.createElement(React__default.Fragment, null, /*#__PURE__*/React__default.createElement(TextInput, {
-    label: "Question",
-    onChange: setQuestion,
-    value: question
-  }), /*#__PURE__*/React__default.createElement("div", {
-    className: "ToolbarPlugin__dialogActions"
-  }, /*#__PURE__*/React__default.createElement(Button, {
-    disabled: question.trim() === '',
-    onClick: onClick
-  }, "Confirm")));
-}
-
-var VALID_TWITTER_URL = /twitter.com\/[0-9a-zA-Z]{1,20}\/status\/([0-9]*)/g;
-
-function InsertTweetDialog(_ref4) {
-  var {
-    activeEditor,
-    onClose
-  } = _ref4;
-  var [text, setText] = React.useState('');
-
-  var onClick = () => {
-    var _text$split, _text$split$, _text$split$$split;
-
-    var tweetID = (_text$split = text.split('status/')) == null ? void 0 : (_text$split$ = _text$split[1]) == null ? void 0 : (_text$split$$split = _text$split$.split('?')) == null ? void 0 : _text$split$$split[0];
-    activeEditor.dispatchCommand(INSERT_TWEET_COMMAND, tweetID);
-    onClose();
-  };
-
-  var isDisabled = text === '' || !text.match(VALID_TWITTER_URL);
-  return /*#__PURE__*/React__default.createElement(React__default.Fragment, null, /*#__PURE__*/React__default.createElement(TextInput, {
-    label: "Tweet URL",
-    placeholder: "i.e. https://twitter.com/jack/status/20",
-    onChange: setText,
-    value: text
-  }), /*#__PURE__*/React__default.createElement("div", {
-    className: "ToolbarPlugin__dialogActions"
-  }, /*#__PURE__*/React__default.createElement(Button, {
-    disabled: isDisabled,
-    onClick: onClick
-  }, "Confirm")));
-}
-
-function InsertImageUriDialogBody(_ref5) {
+function InsertImageUriDialogBody(_ref3) {
   var {
     onClick: _onClick2
-  } = _ref5;
+  } = _ref3;
   var [src, setSrc] = React.useState('');
   var [altText, setAltText] = React.useState('');
   var isDisabled = src === '';
@@ -6097,10 +5503,10 @@ function InsertImageUriDialogBody(_ref5) {
   }, "Confirm")));
 }
 
-function InsertImageUploadedDialogBody(_ref6) {
+function InsertImageUploadedDialogBody(_ref4) {
   var {
     onClick: _onClick3
-  } = _ref6;
+  } = _ref4;
   var [src, setSrc] = React.useState('');
   var [altText, setAltText] = React.useState('');
   var isDisabled = src === '';
@@ -6142,11 +5548,11 @@ function InsertImageUploadedDialogBody(_ref6) {
   }, "Confirm")));
 }
 
-function InsertYouTubeDialog(_ref7) {
+function InsertYouTubeDialog(_ref5) {
   var {
     activeEditor,
     onClose
-  } = _ref7;
+  } = _ref5;
   var [text, setText] = React.useState('');
 
   var onClick = () => {
@@ -6175,11 +5581,11 @@ function InsertYouTubeDialog(_ref7) {
   }, "Confirm")));
 }
 
-function InsertEquationDialog(_ref8) {
+function InsertEquationDialog(_ref6) {
   var {
     activeEditor,
     onClose
-  } = _ref8;
+  } = _ref6;
   var onEquationConfirm = React.useCallback((equation, inline) => {
     activeEditor.dispatchCommand(INSERT_EQUATION_COMMAND, {
       equation,
@@ -6192,7 +5598,7 @@ function InsertEquationDialog(_ref8) {
   });
 }
 
-var InsertDropdown = _ref9 => {
+var InsertDropdown = _ref7 => {
   var {
     enableTable = true,
     enableImage = true,
@@ -6203,13 +5609,13 @@ var InsertDropdown = _ref9 => {
     enableExcalidraw = false,
     enableHorizontalRule = false,
     enableStickyNote = false
-  } = _ref9;
+  } = _ref7;
   var {
     initialEditor,
     activeEditor
   } = React.useContext(EditorContext);
   var [modal, showModal] = useModal();
-  return /*#__PURE__*/React__default.createElement("div", null, enableTable && /*#__PURE__*/React__default.createElement(React__default.Fragment, null, /*#__PURE__*/React__default.createElement(LexicalTablePlugin.TablePlugin, null), /*#__PURE__*/React__default.createElement(TableActionMenuPlugin, null), /*#__PURE__*/React__default.createElement(TableCellResizerPlugin, null)), enableYoutube && /*#__PURE__*/React__default.createElement(YouTubePlugin, null), enableTwitter && /*#__PURE__*/React__default.createElement(TwitterPlugin, null), enablePoll && /*#__PURE__*/React__default.createElement(PollPlugin, null), enableImage && /*#__PURE__*/React__default.createElement(ImagesPlugin, null), enableEquations && /*#__PURE__*/React__default.createElement(EquationsPlugin, null), enableExcalidraw && /*#__PURE__*/React__default.createElement(ExcalidrawPlugin, null), enableHorizontalRule && /*#__PURE__*/React__default.createElement(HorizontalRulePlugin, null), /*#__PURE__*/React__default.createElement(DropDown, {
+  return /*#__PURE__*/React__default.createElement("div", null, enableTable && /*#__PURE__*/React__default.createElement(React__default.Fragment, null, /*#__PURE__*/React__default.createElement(LexicalTablePlugin.TablePlugin, null), /*#__PURE__*/React__default.createElement(TableActionMenuPlugin, null), /*#__PURE__*/React__default.createElement(TableCellResizerPlugin, null)), enableYoutube && /*#__PURE__*/React__default.createElement(YouTubePlugin, null), enableImage && /*#__PURE__*/React__default.createElement(ImagesPlugin, null), enableEquations && /*#__PURE__*/React__default.createElement(EquationsPlugin, null), enableHorizontalRule && /*#__PURE__*/React__default.createElement(HorizontalRulePlugin, null), /*#__PURE__*/React__default.createElement(DropDown, {
     buttonClassName: "toolbar-item spaced",
     buttonLabel: "Insert",
     buttonAriaLabel: "Insert specialized editor node",
@@ -6237,17 +5643,7 @@ var InsertDropdown = _ref9 => {
     className: "icon image"
   }), /*#__PURE__*/React__default.createElement("span", {
     className: "text"
-  }, "Image")), enableExcalidraw && /*#__PURE__*/React__default.createElement("button", {
-    onClick: () => {
-      activeEditor.dispatchCommand(INSERT_EXCALIDRAW_COMMAND, undefined);
-    },
-    className: "item",
-    type: "button"
-  }, /*#__PURE__*/React__default.createElement("i", {
-    className: "icon diagram-2"
-  }), /*#__PURE__*/React__default.createElement("span", {
-    className: "text"
-  }, "Excalidraw")), enableTable && /*#__PURE__*/React__default.createElement("div", null, /*#__PURE__*/React__default.createElement("button", {
+  }, "Image")), enableTable && /*#__PURE__*/React__default.createElement("div", null, /*#__PURE__*/React__default.createElement("button", {
     onClick: () => {
       showModal('Insert Table', onClose => /*#__PURE__*/React__default.createElement(InsertTableDialog, {
         activeEditor: activeEditor,
@@ -6260,33 +5656,7 @@ var InsertDropdown = _ref9 => {
     className: "icon table"
   }), /*#__PURE__*/React__default.createElement("span", {
     className: "text"
-  }, "Table"))), enablePoll && /*#__PURE__*/React__default.createElement("button", {
-    onClick: () => {
-      showModal('Insert Poll', onClose => /*#__PURE__*/React__default.createElement(InsertPollDialog, {
-        activeEditor: activeEditor,
-        onClose: onClose
-      }));
-    },
-    className: "item",
-    type: "button"
-  }, /*#__PURE__*/React__default.createElement("i", {
-    className: "icon poll"
-  }), /*#__PURE__*/React__default.createElement("span", {
-    className: "text"
-  }, "Poll")), enableTwitter && /*#__PURE__*/React__default.createElement("button", {
-    onClick: () => {
-      showModal('Insert Tweet', onClose => /*#__PURE__*/React__default.createElement(InsertTweetDialog, {
-        activeEditor: activeEditor,
-        onClose: onClose
-      }));
-    },
-    className: "item",
-    type: "button"
-  }, /*#__PURE__*/React__default.createElement("i", {
-    className: "icon tweet"
-  }), /*#__PURE__*/React__default.createElement("span", {
-    className: "text"
-  }, "Tweet")), enableYoutube && /*#__PURE__*/React__default.createElement("button", {
+  }, "Table"))), enableYoutube && /*#__PURE__*/React__default.createElement("button", {
     onClick: () => {
       showModal('Insert YouTube Video', onClose => /*#__PURE__*/React__default.createElement(InsertYouTubeDialog, {
         activeEditor: activeEditor,

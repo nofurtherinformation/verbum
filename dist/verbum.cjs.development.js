@@ -3373,8 +3373,7 @@ function $createYouTubeNode(videoID) {
  * LICENSE file in the root directory of this source tree.
  *
  */
-var PlaygroundNodes = [richText.HeadingNode, list.ListNode, list.ListItemNode, richText.QuoteNode, code.CodeNode, table.TableNode, table.TableCellNode, table.TableRowNode, hashtag.HashtagNode, code.CodeHighlightNode, link.AutoLinkNode, link.LinkNode, overflow.OverflowNode, PollNode, StickyNode, ImageNode, MentionNode, EmojiNode, // ExcalidrawNode,
-EquationNode, TypeaheadNode, KeywordNode, LexicalHorizontalRuleNode.HorizontalRuleNode, TweetNode, YouTubeNode, mark.MarkNode];
+var PlaygroundNodes = [richText.HeadingNode, list.ListNode, list.ListItemNode, richText.QuoteNode, code.CodeNode, table.TableNode, table.TableCellNode, table.TableRowNode, hashtag.HashtagNode, code.CodeHighlightNode, link.AutoLinkNode, link.LinkNode, overflow.OverflowNode, PollNode, StickyNode, ImageNode, MentionNode, EmojiNode, EquationNode, TypeaheadNode, KeywordNode, LexicalHorizontalRuleNode.HorizontalRuleNode, TweetNode, YouTubeNode, mark.MarkNode];
 
 var EditorComposer = _ref => {
   var {
@@ -5606,7 +5605,6 @@ var InsertDropdown = _ref7 => {
     enableTwitter = false,
     enablePoll = false,
     enableEquations = false,
-    enableExcalidraw = false,
     enableHorizontalRule = false,
     enableStickyNote = false
   } = _ref7;

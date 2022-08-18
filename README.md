@@ -116,7 +116,6 @@ Coming soon... -->
   enablePoll?: boolean;
   enableImage?: boolean;
   enableEquations?: boolean;
-  enableExcalidraw?: boolean;
   enableHorizontalRule?: boolean;
   enableStickyNote?: boolean; -->
 
@@ -130,7 +129,6 @@ Coming soon... -->
 | enablePoll           | `boolean` | optional | Enables poll inserting feature                   |
 | enableImage          | `boolean` | optional | Enables image inserting feature                  |
 | enableEquations      | `boolean` | optional | Enables equation inserting feature               |
-| enableExcalidraw     | `boolean` | optional | Enables diagram inserting feature                |
 | enableHorizontalRule | `boolean` | optional | Enables the horizontal rule inserting for layout |
 | enableStickyNote     | `boolean` | optional | Enables stick note inserting for layout          |
 

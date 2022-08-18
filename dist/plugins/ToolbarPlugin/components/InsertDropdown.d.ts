@@ -6,7 +6,6 @@ export interface IInsertDropdownProps {
     enablePoll?: boolean;
     enableImage?: boolean;
     enableEquations?: boolean;
-    enableExcalidraw?: boolean;
     enableHorizontalRule?: boolean;
     enableStickyNote?: boolean;
 }

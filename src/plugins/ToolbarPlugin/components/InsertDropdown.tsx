@@ -11,9 +11,6 @@ import { INSERT_HORIZONTAL_RULE_COMMAND } from '@lexical/react/LexicalHorizontal
 import EquationsPlugin, {
   INSERT_EQUATION_COMMAND,
 } from '../../EquationsPlugin';
-// import ExcalidrawPlugin, {
-//   INSERT_EXCALIDRAW_COMMAND,
-// } from '../../ExcalidrawPlugin';
 // import PollPlugin, { INSERT_POLL_COMMAND } from '../../PollPlugin';
 // import TwitterPlugin, { INSERT_TWEET_COMMAND } from '../../TwitterPlugin';
 import YouTubePlugin, { INSERT_YOUTUBE_COMMAND } from '../../YouTubePlugin';
@@ -337,7 +334,6 @@ export interface IInsertDropdownProps {
   enablePoll?: boolean;
   enableImage?: boolean;
   enableEquations?: boolean;
-  enableExcalidraw?: boolean;
   enableHorizontalRule?: boolean;
   enableStickyNote?: boolean;
 }
@@ -349,7 +345,6 @@ const InsertDropdown: React.FC<IInsertDropdownProps> = ({
   enableTwitter = false,
   enablePoll = false,
   enableEquations = false,
-  enableExcalidraw = false,
   enableHorizontalRule = false,
   enableStickyNote = false,
 }: IInsertDropdownProps) => {
@@ -370,7 +365,6 @@ const InsertDropdown: React.FC<IInsertDropdownProps> = ({
       {/* {enablePoll && <PollPlugin />} */}
       {enableImage && <ImagesPlugin />}
       {enableEquations && <EquationsPlugin />}
-      {/* {enableExcalidraw && <ExcalidrawPlugin />} */}
       {enableHorizontalRule && <HorizontalRulePlugin />}
 
       <DropDown
@@ -411,21 +405,6 @@ const InsertDropdown: React.FC<IInsertDropdownProps> = ({
             <span className="text">Image</span>
           </button>
         )}
-        {/* {enableExcalidraw && (
-          <button
-            onClick={() => {
-              activeEditor.dispatchCommand(
-                INSERT_EXCALIDRAW_COMMAND,
-                undefined
-              );
-            }}
-            className="item"
-            type="button"
-          >
-            <i className="icon diagram-2" />
-            <span className="text">Excalidraw</span>
-          </button>
-        )} */}
         {enableTable && (
           <div>
             <button
